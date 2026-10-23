@@ -1,0 +1,21 @@
+<div class="container mt-4">
+    <h2>Add a New Participant</h2>
+    <form (ngSubmit)="save()">
+        <div class="form-group">
+            <label class="form-label" for="name">Name:</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="Name" [(ngModel)]="participant.name">
+            <label class="form-label" for="bic">BIC:</label>
+            <input type="text" class="form-control" id="bic" name="bic" placeholder="BIC" [(ngModel)]="participant.bic">
+            <label class="form-label" for="shortName">Short Name:</label>
+            <input type="text" class="form-control" id="shortName" name="shortName" placeholder="Short Name" [(ngModel)]="participant.shortName">
+            <label class="form-label" for="email">Email:</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Email" [(ngModel)]="participant.email">
+            <label class="form-label" for="phoneNumber">Phone Number:</label>
+            <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Phone Number" [(ngModel)]="participant.phoneNumber">
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary me-3">Save</button>
+            <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        </div>
+    </form>
+</div>
