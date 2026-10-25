@@ -14,6 +14,7 @@ export class ParticipantComponent {
     private router: Router, 
     private participantService: ParticipantService){}
  
+
   
   logout() {
     this.router.navigate(['/login'])
@@ -21,5 +22,9 @@ export class ParticipantComponent {
   
   goToAddParticipant() {
     this.router.navigate(['/participant/new']);
+  }
+
+  goToEditParticipant(id: string) {
+    this.router.navigate(['/participant/edit', id]);
   }
 }

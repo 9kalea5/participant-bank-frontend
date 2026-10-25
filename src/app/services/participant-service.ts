@@ -60,4 +60,29 @@ export class ParticipantService {
       status: "Inactive"
     }
   ];
+
+
+
+  getParticipantById(id: string): Participant | undefined {
+    return this.participantList.find(p => p.id === id);
+  }
+
+  updateParticipant(
+    id: string,
+    updatedParticipant: Participant
+  ): boolean {
+    const index = this.participantList.findIndex(
+      p => p.id === id
+    );
+
+    if (index === -1) {
+      return false;
+    }
+
+    this.participantList[index] = {
+      ...updatedParticipant,
+      id
+    };
+    return true;
+  }
 }
