@@ -1,5 +1,7 @@
 <div class="container mt-4">
-    <h2>Add a New Participant</h2>
+    <h2>
+  {{ isEditMode ? 'Edit Participant' : 'Register Participant' }}
+</h2>
     <form (ngSubmit)="save()">
         <div class="form-group">
             <label class="form-label" for="name">Name:</label>
@@ -12,9 +14,20 @@
             <input type="email" class="form-control" id="email" name="email" placeholder="Email" [(ngModel)]="participant.email">
             <label class="form-label" for="phoneNumber">Phone Number:</label>
             <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Phone Number" [(ngModel)]="participant.phoneNumber">
+            <label class="form'label mt-3" for="status">Status</label>
+            <select
+                class="form-select"
+                id="status"
+                name="status"
+                [(ngModel)]="participant.status"
+                required
+            >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
         </div>
         <div class="mt-3">
-            <button type="submit" class="btn btn-primary me-3">Save</button>
+            <button type="submit" class="btn btn-primary me-3">{{ isEditMode ? 'Update' : 'Save'}}</button>
             <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
         </div>
     </form>

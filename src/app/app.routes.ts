@@ -8,6 +8,9 @@ export const routes: Routes = [
         loadComponent: () => import('./participant-component/participant-component').then(m => m.ParticipantComponent),
         title: 'Participant'},
     {path: 'participant/new',
-        loadComponent: () => import('./new-participant/new-participant').then(m => m.NewParticipant),
+        loadComponent: () => import('./form-component/form-component').then(m => m.FormComponent),
         title: 'Add Participant'},
+    {path: 'participant/edit/:id',
+        loadComponent: () => import('./form-component/form-component').then(m => m.FormComponent),
+        title: 'Edit Participant'},
 ];

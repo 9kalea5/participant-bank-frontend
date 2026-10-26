@@ -10,7 +10,7 @@
     
     <table class="table">
       <thead>
-        <tr>
+        <tr class="table-dark">
           <th scope="col">ID</th>
           <th scope="col">Name</th>
           <th scope="col">BIC</th>
@@ -23,7 +23,7 @@
   
       <tbody>
         @for (participant of participantService.filteredParticipants; track participant.id) {
-          <tr>  
+          <tr (click)="goToEditParticipant(participant.id)" class="table-hover" style="cursor: pointer;">  
             <th scope="row">{{ participant.id }}</th>
             <td>{{ participant.name }}</td>
             <td>{{ participant.bic }}</td>
