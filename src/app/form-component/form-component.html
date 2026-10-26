@@ -1,34 +1,131 @@
+
 <div class="container mt-4">
-    <h2>
-  {{ isEditMode ? 'Edit Participant' : 'Register Participant' }}
-</h2>
-    <form (ngSubmit)="save()">
-        <div class="form-group">
-            <label class="form-label" for="name">Name:</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="Name" [(ngModel)]="participant.name">
-            <label class="form-label" for="bic">BIC:</label>
-            <input type="text" class="form-control" id="bic" name="bic" placeholder="BIC" [(ngModel)]="participant.bic">
-            <label class="form-label" for="shortName">Short Name:</label>
-            <input type="text" class="form-control" id="shortName" name="shortName" placeholder="Short Name" [(ngModel)]="participant.shortName">
-            <label class="form-label" for="email">Email:</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="Email" [(ngModel)]="participant.email">
-            <label class="form-label" for="phoneNumber">Phone Number:</label>
-            <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Phone Number" [(ngModel)]="participant.phoneNumber">
-            <label class="form'label mt-3" for="status">Status</label>
-            <select
-                class="form-select"
-                id="status"
-                name="status"
-                [(ngModel)]="participant.status"
-                required
-            >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-            </select>
+  <h2>
+    {{ isEditMode ? 'Edit Participant' : 'Register Participant' }}
+  </h2>
+
+  <form [formGroup]="participantForm" (ngSubmit)="save()">
+    <div class="form-group">
+
+   
+      <label class="form-label" for="name">Name:</label>
+      <input
+        type="text"
+        class="form-control"
+        id="name"
+        formControlName="name"
+        placeholder="Name"
+        [class.is-invalid]="f['name'].invalid && f['name'].touched"
+      />
+
+      @if (f['name'].touched && f['name'].hasError('required')) {
+        <div class="text-danger mt-1">Name is required.</div>
+      }
+      @if (f['name'].touched && f['name'].hasError('minlength')) {
+        <div class="text-danger mt-1">
+          Name must be at least 2 characters.
         </div>
-        <div class="mt-3">
-            <button type="submit" class="btn btn-primary me-3">{{ isEditMode ? 'Update' : 'Save'}}</button>
-            <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+      }
+
+   
+      <label class="form-label mt-3" for="bic">BIC:</label>
+      <input
+        type="text"
+        class="form-control"
+        id="bic"
+        formControlName="bic"
+        placeholder="BIC"
+        [class.is-invalid]="f['bic'].invalid && f['bic'].touched"
+      />
+
+      @if (f['bic'].touched && f['bic'].hasError('required')) {
+        <div class="text-danger mt-1">BIC is required.</div>
+      }
+      @if (
+        f['bic'].touched &&
+        (f['bic'].hasError('minlength') ||
+         f['bic'].hasError('maxlength'))
+      ) {
+        <div class="text-danger mt-1">
+          BIC must be 8 or 11 characters long.
         </div>
-    </form>
+      }
+      @if (f['bic'].touched && f['bic'].hasError('pattern')) {
+    <div class="text-danger mt-1">
+        BIC must contain letters and numbers only.
+    </div>
+    }
+
+      <label class="form-label mt-3" for="shortName">Short Name:</label>
+      <input
+        type="text"
+        class="form-control"
+        id="shortName"
+        formControlName="shortName"
+        placeholder="Short Name"
+      />
+
+
+
+      <label class="form-label mt-3" for="email">Email:</label>
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        formControlName="email"
+        placeholder="Email"
+      />
+
+      @if (f['email'].touched && f['email'].hasError('email')) {
+        <div class="text-danger mt-1" [class.is-invalid]="f['email'].invalid && f['email'].touched">
+          Please enter a valid email address.
+        </div>
+      }
+
+      <label class="form-label mt-3" for="phoneNumber">
+        Phone Number:
+      </label>
+      <input
+        type="tel"
+        class="form-control"
+        id="phoneNumber"
+        formControlName="phoneNumber"
+        placeholder="Phone Number"
+      />
+
+      <label class="form-label mt-3" for="status">Status:</label>
+      <select
+        class="form-select"
+        id="status"
+        formControlName="status"
+      >
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+
+      @if (f['status'].touched && f['status'].hasError('required')) {
+        <div class="text-danger mt-1" [class.is-invalid]="f['status'].invalid && f['status'].touched">
+            Please select a status.
+        </div>
+      }
+
+    </div>
+
+    <div class="mt-3">
+      <button
+        type="submit"
+        class="btn btn-primary me-3"
+        [disabled]="participantForm.invalid">
+        {{ isEditMode ? 'Update' : 'Save' }}
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
 </div>

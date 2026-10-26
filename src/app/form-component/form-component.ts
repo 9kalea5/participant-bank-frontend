@@ -3,9 +3,12 @@ import { Participant } from '../models/participant.interface';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipantService } from '../services/participant-service';
+import { FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
+import { email, validate } from '@angular/forms/signals';
 
 @Component({
-  imports: [FormsModule],
+  imports: [FormsModule, ReactiveFormsModule],
   selector: 'app-form',
   styleUrl: './form-component.css',
   templateUrl: './form-component.html',
@@ -13,22 +16,30 @@ import { ParticipantService } from '../services/participant-service';
 export class FormComponent implements OnInit {
 
   isEditMode = false;
+  participantForm: FormGroup
 
   constructor(
     private router: Router,
     public participantService: ParticipantService,
-    private activatedRoute: ActivatedRoute
-  ) {}
+    private activatedRoute: ActivatedRoute,
+    private fb: FormBuilder
+  ) {
+    this.participantForm = fb.group({
+      name: ['', Validators.required],
+      bic: ['', [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.maxLength(11),
+        Validators.pattern(/^[a-zA-z0-9]+$/)
+      ]],
+      shortName: '',
+      email: ['', Validators.email],
+      phoneNumber: [''],
+      status: ['', Validators.required]
+    })
+  }
 
-  participant: Participant = {
-    id: '',
-    name: '',
-    bic: '',
-    shortName: '',
-    email: '',
-    phoneNumber: '',
-    status: 'Inactive'
-  };
+  
 
   ngOnInit(): void {
     const id = this.activatedRoute.snapshot.paramMap.get('id');
@@ -45,15 +56,13 @@ export class FormComponent implements OnInit {
         return;
       }
 
-      // Copy the participant so Cancel does not change the original.
-      this.participant = { ...existingParticipant };
+      this.participantForm.patchValue(existingParticipant);
     }
   }
 
   newSave(): void {
     const participants = this.participantService.participantList;
 
-    // Generate an ID without reusing an existing numeric ID.
     const nextId = (
       participants.length > 0
         ? Math.max(...participants.map(p => Number(p.id) || 0)) + 1
@@ -61,7 +70,7 @@ export class FormComponent implements OnInit {
     ).toString();
 
     const newParticipant: Participant = {
-      ...this.participant,
+      ...this.participantForm.getRawValue(),
       id: nextId
     };
     
@@ -77,7 +86,7 @@ export class FormComponent implements OnInit {
 
     const updated = this.participantService.updateParticipant(
       id,
-      this.participant
+      this.participantForm.getRawValue()
     );
 
     if (!updated) {
@@ -94,10 +103,17 @@ export class FormComponent implements OnInit {
   }
 
   save(): void {
+    if (this.participantForm.invalid) {
+      this.participantForm.markAllAsTouched()
+      return
+    }
     if (this.isEditMode) {
       this.editSave();
     } else {
       this.newSave();
     }
+  }
+  get f() {
+    return this.participantForm.controls
   }
 }
