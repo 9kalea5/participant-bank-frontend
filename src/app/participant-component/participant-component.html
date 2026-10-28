@@ -149,3 +149,13 @@
     [message]="loadingMessage"
   />
 }
+@if (participantService.successMessage) {
+  <app-alert
+  type="success"
+  [message]="participantService.successMessage"/>
+}
+@if (participantService.errorMessage) {
+  <app-alert
+  type="error"
+  [message]="participantService.errorMessage"/>
+}
