@@ -61,21 +61,17 @@ export class FormComponent implements OnInit {
   }
 
   newSave(): void {
-    const participants = this.participantService.participantList;
+    const participants = this.participantForm.getRawValue()
 
-    const nextId = (
-      participants.length > 0
-        ? Math.max(...participants.map(p => Number(p.id) || 0)) + 1
-        : 1
-    ).toString();
-
-    const newParticipant: Participant = {
-      ...this.participantForm.getRawValue(),
-      id: nextId
-    };
-    
-    participants.push(newParticipant);
-    this.router.navigate(['/participant']);
+    this.participantService.createParticipant(participants).subscribe({
+      next: () => {
+        this.router.navigate(['/participant'])
+      },
+      error: (error) => {
+        console.error('Failed to add participant', error)
+        alert('Failed to add participant')
+      }
+    })
   }
 
   editSave(): void {
@@ -84,18 +80,17 @@ export class FormComponent implements OnInit {
       return;
     }
 
-    const updated = this.participantService.updateParticipant(
-      id,
-      this.participantForm.getRawValue()
-    );
-
-    if (!updated) {
-      alert('Participant not found!');
-      this.router.navigate(['/participant']);
-      return;
-    }
-
-    this.router.navigate(['/participant']);
+    const participant = this.participantForm.getRawValue()
+    this.participantService.updateParticipant(id, participant).subscribe({
+      next: () => {
+        this.router.navigate(['/participant'])
+      },
+      error: (error) => {
+        console.error('Failed to Update Participant', error)
+        alert('Failed to')
+      }
+    })
+    
   }
 
   cancel(): void {
