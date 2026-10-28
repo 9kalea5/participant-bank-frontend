@@ -52,16 +52,7 @@
     />
 
     <!-- Loading indicator -->
-    @if (participantService.loading) {
-      <div
-        class="d-flex flex-column justify-content-center align-items-center py-5"
-        role="status"
-        aria-live="polite"
-      >
-        <div class="spinner-border text-primary mb-3" aria-hidden="true"></div>
-        <span class="text-secondary">Loading participants...</span>
-      </div>
-    } @else if (!participantService.errorMessage) {
+    @if (!participantService.loading && !participantService.errorMessage) {
 
       <!-- Participant table -->
       <div class="table-responsive">
@@ -144,58 +135,17 @@
   </div>
 </div>
 
-<!-- Delete confirmation modal -->
 @if (showDeleteConfirmation) {
-  <div
-    class="modal fade show d-block"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="deleteModalTitle"
-  >
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-
-        <div class="modal-header">
-          <h5 class="modal-title" id="deleteModalTitle">
-            Confirm Delete
-          </h5>
-
-          <button
-            type="button"
-            class="btn-close"
-            aria-label="Close"
-            (click)="cancelDelete()"
-          ></button>
-        </div>
-
-        <div class="modal-body">
-          Are you sure you want to delete this participant?
-          This action cannot be undone.
-        </div>
-
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            (click)="cancelDelete()"
-          >
-            Go Back
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-danger"
-            (click)="confirmDelete()"
-          >
-            <i class="bi bi-trash me-1"></i>
-            Confirm Delete
-          </button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop fade show"></div>
+  <app-confirm-modal
+    title="Confirm Delete"
+    message="Are you sure you want to delete this participant? This action cannot be undone."
+    confirmText="Confirm Delete"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
+@if (isLoading) {
+  <app-loading-modal
+    [message]="loadingMessage"
+  />
 }

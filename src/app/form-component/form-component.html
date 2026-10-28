@@ -25,6 +25,7 @@
         <div class="text-danger mt-1">
           Name must be at least 2 characters.
         </div>
+
       }
 
    
@@ -49,6 +50,7 @@
         <div class="text-danger mt-1">
           BIC must be 8 or 11 characters long.
         </div>
+
       }
       @if (f['bic'].touched && f['bic'].hasError('pattern')) {
     <div class="text-danger mt-1">
@@ -129,3 +131,43 @@
     </div>
   </form>
 </div>
+
+@if (showSaveConfirmation) {
+  <app-confirm-modal
+    [title]="isEditMode ? 'Confirm Update' : 'Confirm Save'"
+    [message]="isEditMode
+      ? 'Are you sure you want to update this participant?'
+      : 'Are you sure you want to save this participant?'"
+    [confirmText]="isEditMode ? 'Confirm Update' : 'Confirm Save'"
+    [cancelText]="'Go Back'"
+    (confirmed)="confirmSave()"
+    (cancelled)="cancelSave()"
+  />
+}
+
+@if (showCancelConfirmation) {
+  <app-confirm-modal
+    title="Confirm Cancel"
+    message="Are you sure you want to cancel? Your unsaved changes will be lost."
+    confirmText="Yes, Cancel"
+    cancelText="Keep Editing"
+    (confirmed)="confirmCancel()"
+    (cancelled)="cancelCancel()"
+  />
+}
+
+@if(isLoading) {
+  <app-loading-modal
+  message="Saving participant, please wait"/>
+}
+
+@if (participantService.successMessage) {
+  <app-alert
+  type="success"
+  [message]="participantService.successMessage"/>
+}
+@if (participantService.errorMessage) {
+  <app-alert
+  type="error"
+  [message]="participantService.errorMessage"/>
+}

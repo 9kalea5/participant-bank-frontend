@@ -2,9 +2,12 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ParticipantService } from '../services/participant-service';
+import { ConfirmModal } from '../shared/confirm-modal/confirm-modal';
+import { LoadingModal } from '../shared/loading-modal/loading-modal';
+import { Alert } from '../shared/alert/alert';
 
 @Component({
-  imports: [FormsModule],
+  imports: [FormsModule, ConfirmModal, LoadingModal, Alert],
   selector: 'app-participant-component',
   styleUrl: './participant-component.css',
   templateUrl: './participant-component.html',
@@ -12,6 +15,8 @@ import { ParticipantService } from '../services/participant-service';
 export class ParticipantComponent {
 
   showDeleteConfirmation = false;
+  isLoading = false
+  loadingMessage = 'Loading participants, please wait...'
   selectedParticipantId: string | null = null;
 
   constructor(
@@ -20,12 +25,19 @@ export class ParticipantComponent {
  
 
   ngOnInit(): void {
+    this.isLoading = true;
+    this.loadingMessage = 'Loading participants, please wait...'
+
     //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
     //Add 'implements OnInit' to the class.
     this.participantService.loadParticipants().subscribe({
+      next: () => {
+        this.isLoading = false
+      },
       error: error => {
-      console.error('Unable to load participants:', error);
-      }
+        this.isLoading = false
+        console.error('Unable to load participants:', error);
+        }
     });
   }
   
@@ -46,18 +58,35 @@ export class ParticipantComponent {
     this.showDeleteConfirmation = true;
   }
   confirmDelete(): void {
-  const id = this.selectedParticipantId
+    const id = this.selectedParticipantId
   
     if(id === null) {
       return
     }
+    this.showDeleteConfirmation = false;
+    this.isLoading = true
+    this.loadingMessage = 'Deleting Participant, please wait'
+
     this.participantService.deleteParticipant(id).subscribe({
       next: () => {
-        this.participantService.loadParticipants()
+        this.selectedParticipantId = null;
+        this.participantService.showSuccess('Participant successfully deleted.')
+        this.isLoading = false
+        this.participantService.loadParticipants().subscribe({
+          next: () => {
+            this.isLoading = false
+          },
+          error: (error) => {
+            console.error('Unable to reload participants after deletion', error);
+          }
+        });
       },
       error: (error) => {
+        this.selectedParticipantId = null;
+        this.isLoading = false
         console.error("Failed to delete participant", error)
-        alert("Failed to delete participant")
+        this.participantService.showError('Failed to delete participant.')
+        
       }
     })
   }

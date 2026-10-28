@@ -1,0 +1,16 @@
+@if (message) {
+  <div
+    class="alert py-1 px-2 mb-2 small d-flex align-items-center"
+    [class.alert-success]="type === 'success'"
+    [class.alert-danger]="type === 'error'"
+    role="alert"
+    aria-live="polite"
+  >
+    <i
+      class="bi me-2"
+      [class.bi-check-circle-fill]="type === 'success'"
+      [class.bi-exclamation-triangle-fill]="type === 'error'"
+    ></i>
+    {{ message }}
+  </div>
+}

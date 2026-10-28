@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { Participant } from '../models/participant.interface';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipantService } from '../services/participant-service';
-import { FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms';
+import { FormGroup, Validators, FormBuilder, FormsModule } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
-import { email, validate } from '@angular/forms/signals';
+import { ConfirmModal } from '../shared/confirm-modal/confirm-modal';
+import { LoadingModal } from '../shared/loading-modal/loading-modal';
+import { Alert } from '../shared/alert/alert';
 
 @Component({
-  imports: [FormsModule, ReactiveFormsModule],
+  imports: [FormsModule, ReactiveFormsModule, ConfirmModal, LoadingModal, Alert],
   selector: 'app-form',
   styleUrl: './form-component.css',
   templateUrl: './form-component.html',
@@ -16,7 +16,10 @@ import { email, validate } from '@angular/forms/signals';
 export class FormComponent implements OnInit {
 
   isEditMode = false;
+  showSaveConfirmation = false;
+  showCancelConfirmation = false;
   participantForm: FormGroup
+  isLoading = false;
 
   constructor(
     private router: Router,
@@ -42,6 +45,7 @@ export class FormComponent implements OnInit {
   
 
   ngOnInit(): void {
+    this.participantService.clearMessages()
     const id = this.activatedRoute.snapshot.paramMap.get('id');
 
     if (id !== null) {
@@ -63,13 +67,20 @@ export class FormComponent implements OnInit {
   newSave(): void {
     const participants = this.participantForm.getRawValue()
 
+    this.isLoading = true
+
     this.participantService.createParticipant(participants).subscribe({
       next: () => {
+        this.participantService.showSuccess('Participant added successfully.')
+        this.isLoading = false
         this.router.navigate(['/participant'])
       },
       error: (error) => {
+        this.isLoading = false
         console.error('Failed to add participant', error)
-        alert('Failed to add participant')
+        this.participantService.showError(error.name === 'TimeoutError'
+          ? 'Create request timed out after 10 seconds. Please try again.'
+          : 'Failed to create participant. Please try again.')
       }
     })
   }
@@ -81,20 +92,35 @@ export class FormComponent implements OnInit {
     }
 
     const participant = this.participantForm.getRawValue()
+    this.isLoading = true
     this.participantService.updateParticipant(id, participant).subscribe({
       next: () => {
+        this.participantService.showSuccess('Participant edited successfully')
+        this.isLoading = false
         this.router.navigate(['/participant'])
       },
       error: (error) => {
+        this.isLoading = false
         console.error('Failed to Update Participant', error)
-        alert('Failed to')
+        this.participantService.showError( error.name === 'TimeoutError'
+          ? 'Update timed out after 10 seconds. Please try again.'
+          : 'Failed to update participant. Please try again.')
       }
     })
     
   }
 
   cancel(): void {
+    this.showCancelConfirmation = true;
+  }
+
+  confirmCancel(): void {
+    this.showCancelConfirmation = false;
     this.router.navigate(['/participant']);
+  }
+
+  cancelCancel(): void {
+    this.showCancelConfirmation = false;
   }
 
   save(): void {
@@ -102,11 +128,20 @@ export class FormComponent implements OnInit {
       this.participantForm.markAllAsTouched()
       return
     }
+    this.showSaveConfirmation = true;
+  }
+
+  confirmSave(): void {
+    this.showSaveConfirmation = false;
     if (this.isEditMode) {
       this.editSave();
     } else {
       this.newSave();
     }
+  }
+
+  cancelSave(): void {
+    this.showSaveConfirmation = false;
   }
   get f() {
     return this.participantForm.controls
