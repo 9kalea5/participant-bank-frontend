@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ParticipantService } from '../services/participant-service';
 import { ConfirmModal } from '../shared/confirm-modal/confirm-modal';
 import { LoadingModal } from '../shared/loading-modal/loading-modal';
 import { Alert } from '../shared/alert/alert';
+import { finalize } from 'rxjs';
 
 @Component({
   imports: [FormsModule, ConfirmModal, LoadingModal, Alert],
@@ -20,24 +21,28 @@ export class ParticipantComponent {
   selectedParticipantId: string | null = null;
 
   constructor(
-    private router: Router, 
-    private participantService: ParticipantService){}
- 
+    private router: Router,
+    public participantService: ParticipantService,
+    private changeDetectorRef: ChangeDetectorRef){}
+
 
   ngOnInit(): void {
-    this.isLoading = true;
-    this.loadingMessage = 'Loading participants, please wait...'
+    this.loadParticipants();
+  }
 
-    //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
-    //Add 'implements OnInit' to the class.
-    this.participantService.loadParticipants().subscribe({
-      next: () => {
-        this.isLoading = false
-      },
+  loadParticipants(): void {
+    this.isLoading = true;
+    this.loadingMessage = 'Loading participants, please wait...';
+
+    this.participantService.loadParticipants().pipe(
+      finalize(() => {
+        this.isLoading = false;
+        this.changeDetectorRef.detectChanges();
+      })
+    ).subscribe({
       error: error => {
-        this.isLoading = false
         console.error('Unable to load participants:', error);
-        }
+      },
     });
   }
   
@@ -72,14 +77,7 @@ export class ParticipantComponent {
         this.selectedParticipantId = null;
         this.participantService.showSuccess('Participant successfully deleted.')
         this.isLoading = false
-        this.participantService.loadParticipants().subscribe({
-          next: () => {
-            this.isLoading = false
-          },
-          error: (error) => {
-            console.error('Unable to reload participants after deletion', error);
-          }
-        });
+        this.loadParticipants();
       },
       error: (error) => {
         this.selectedParticipantId = null;
