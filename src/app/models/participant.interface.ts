@@ -1,9 +1,10 @@
 export interface Participant {
-    id: string;
+    id: number;
     name: string;
     bic: string;
     shortName: string;
     email: string;
     phoneNumber: string;
     status: string;
+    logoPath: string | null;
 }

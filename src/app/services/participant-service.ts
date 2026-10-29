@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Participant } from '../models/participant.interface';
 import { HttpClient } from '@angular/common/http';
 import { catchError, finalize, map, Observable, tap, throwError, timeout } from 'rxjs';
@@ -9,9 +9,10 @@ export class ParticipantService {
   private http = inject(HttpClient);
   searchTerm: string = '';
   loading = false;
-  errorMessage = ''
-  successMessage = '';
+  errorMessage = signal('');
+  successMessage = signal('');
   private readonly requestTimeout = 10_000
+  private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
   participantList: Participant[] = []
   
@@ -28,7 +29,7 @@ export class ParticipantService {
 
 loadParticipants(): Observable<Participant[]> {
   this.loading = true;
-  this.errorMessage = '';
+  this.errorMessage.set('');
 
   console.log('Starting GET request:', this.url);
 
@@ -64,10 +65,9 @@ loadParticipants(): Observable<Participant[]> {
       catchError(error => {
         console.error('Failed to load participants:', error);
 
-        this.errorMessage =
-          error.name === 'TimeoutError'
-            ? 'The request timed out after 10 seconds.'
-            : 'Could not load participants. Please try again.';
+        if (error.name === 'TimeoutError') {
+          this.showError('The request timed out after 10 seconds.');
+        }
 
         return throwError(() => error);
       }),
@@ -80,7 +80,7 @@ loadParticipants(): Observable<Participant[]> {
 }
 
   getParticipantById(id: string): Participant | undefined {
-    return this.participantList.find(p => p.id === id);
+    return this.participantList.find(p => String(p.id) === id);
   }
 
   updateParticipant(id: string, participant: Participant): Observable<Participant[]> {
@@ -94,23 +94,50 @@ loadParticipants(): Observable<Participant[]> {
 
   }
 
-  deleteParticipant(id: string): Observable<Participant[]> {
+  deleteParticipant(id: number | string): Observable<Participant[]> {
     return this.http.delete<Participant[]>(`${this.url}/${id}`)
                     .pipe(timeout(this.requestTimeout))
 
   }
   showSuccess(message: string): void {
-    this.successMessage = message;
-    this.errorMessage = '';
+    this.scheduleMessageClear();
+    this.successMessage.set(message);
+    this.errorMessage.set('');
   }
 
   showError(message: string): void {
-    this.errorMessage = message;
-    this.successMessage = '';
+    this.scheduleMessageClear();
+    this.errorMessage.set(message);
+    this.successMessage.set('');
   }
 
   clearMessages(): void {
-    this.successMessage = '';
-    this.errorMessage = '';
+    if (this.messageTimeout !== null) {
+      clearTimeout(this.messageTimeout);
+      this.messageTimeout = null;
+    }
+
+    this.successMessage.set('');
+    this.errorMessage.set('');
+  }
+
+  private scheduleMessageClear(): void {
+    if (this.messageTimeout !== null) {
+      clearTimeout(this.messageTimeout);
+    }
+
+    this.messageTimeout = setTimeout(() => {
+      this.successMessage.set('');
+      this.errorMessage.set('');
+      this.messageTimeout = null;
+    }, 1000);
+  }
+
+  addLogo(id: number | string, file: File): Observable<unknown> {
+    const formData = new FormData();
+    formData.append('logo', file)
+
+    return this.http.post(`${this.url}/${id}/logo`, formData)
+          .pipe(timeout(this.requestTimeout))
   }
 }

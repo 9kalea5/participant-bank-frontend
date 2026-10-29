@@ -18,7 +18,7 @@ export class ParticipantComponent {
   showDeleteConfirmation = false;
   isLoading = false
   loadingMessage = 'Loading participants, please wait...'
-  selectedParticipantId: string | null = null;
+  selectedParticipantId: number | null = null;
 
   constructor(
     private router: Router,
@@ -37,7 +37,7 @@ export class ParticipantComponent {
     this.participantService.loadParticipants().pipe(
       finalize(() => {
         this.isLoading = false;
-        this.changeDetectorRef.detectChanges();
+        this.changeDetectorRef.markForCheck();
       })
     ).subscribe({
       error: error => {
@@ -54,11 +54,26 @@ export class ParticipantComponent {
     this.router.navigate(['/participant/new']);
   }
 
-  goToEditParticipant(id: string) {
-    this.router.navigate(['/participant/edit', id]);
+  goToEditParticipant(id: number) {
+    this.router.navigate(['/participant', id]);
   }
 
-  deleteParticipant(id: string){
+  getLogoUrl(logoPath: string | null): string | null {
+    if (!logoPath) {
+      return null;
+    }
+
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath;
+    }
+
+    const filename = logoPath.split('/').pop();
+    return filename
+      ? `http://localhost:9081/uploads/logos/${filename}`
+      : null;
+  }
+
+  deleteParticipant(id: number){
     this.selectedParticipantId = id;
     this.showDeleteConfirmation = true;
   }
@@ -83,7 +98,11 @@ export class ParticipantComponent {
         this.selectedParticipantId = null;
         this.isLoading = false
         console.error("Failed to delete participant", error)
-        this.participantService.showError('Failed to delete participant.')
+        if (error.name === 'TimeoutError') {
+          this.participantService.showError(
+            'Delete request timed out after 10 seconds. Please try again.'
+          );
+        }
         
       }
     })

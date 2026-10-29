@@ -14,33 +14,7 @@
   <div class="col-12 p-4">
 
     <!-- Error message -->
-    @if (participantService.errorMessage) {
-      <div
-        class="alert alert-danger alert-dismissible fade show"
-        role="alert"
-      >
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        {{ participantService.errorMessage }}
-
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Close"
-          (click)="participantService.errorMessage = ''"
-        ></button>
-
-        <div class="mt-3">
-          <button
-            type="button"
-            class="btn btn-outline-danger btn-sm"
-            (click)="loadParticipants()"
-          >
-            <i class="bi bi-arrow-clockwise me-1"></i>
-            Try Again
-          </button>
-        </div>
-      </div>
-    }
+  
 
     <!-- Search -->
     <input
@@ -52,7 +26,7 @@
     />
 
     <!-- Loading indicator -->
-    @if (!isLoading && !participantService.errorMessage) {
+    @if (!isLoading && !participantService.errorMessage()) {
 
       <!-- Participant table -->
       <div class="table-responsive">
@@ -60,6 +34,7 @@
           <thead>
             <tr class="table-dark">
               <th scope="col">ID</th>
+              <th scope="col">Logo</th>
               <th scope="col">Name</th>
               <th scope="col">BIC</th>
               <th scope="col">Short Name</th>
@@ -76,10 +51,24 @@
               track participant.id
             ) {
               <tr
-                (click)="goToEditParticipant(participant.id)"
+                (click)="goToEditParticipant(+participant.id)"
                 style="cursor: pointer"
               >
                 <th scope="row">{{ participant.id }}</th>
+                <td>
+                  @if (getLogoUrl(participant.logoPath); as logoUrl) {
+                    <img
+                      [src]="logoUrl"
+                      [alt]="participant.name + ' logo'"
+                      class="img-thumbnail rounded-circle"
+                      width="50"
+                      height="50"
+                      style="object-fit: contain;"
+                    />
+                  } @else {
+                    <span class="text-secondary">No logo</span>
+                  }
+                </td>
                 <td>{{ participant.name }}</td>
                 <td>{{ participant.bic }}</td>
                 <td>{{ participant.shortName }}</td>
@@ -98,7 +87,7 @@
                     type="button"
                     class="btn btn-danger btn-sm"
                     (click)="
-                      deleteParticipant(participant.id);
+                      deleteParticipant(+participant.id);
                       $event.stopPropagation()
                     "
                   >
@@ -109,7 +98,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="text-center text-secondary py-4">
+                <td colspan="9" class="text-center text-secondary py-4">
                   <i class="bi bi-inbox me-2"></i>
                   No participants found.
                 </td>
@@ -149,13 +138,13 @@
     [message]="loadingMessage"
   />
 }
-@if (participantService.successMessage) {
+@if (participantService.successMessage()) {
   <app-alert
   type="success"
-  [message]="participantService.successMessage"/>
+  [message]="participantService.successMessage()"/>
 }
-@if (participantService.errorMessage) {
+@if (participantService.errorMessage()) {
   <app-alert
   type="error"
-  [message]="participantService.errorMessage"/>
+  [message]="participantService.errorMessage()"/>
 }

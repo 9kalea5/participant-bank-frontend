@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipantService } from '../services/participant-service';
 import { FormGroup, Validators, FormBuilder, FormsModule } from '@angular/forms';
@@ -6,6 +6,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ConfirmModal } from '../shared/confirm-modal/confirm-modal';
 import { LoadingModal } from '../shared/loading-modal/loading-modal';
 import { Alert } from '../shared/alert/alert';
+import { finalize, of, switchMap, throwError } from 'rxjs';
+
 
 @Component({
   imports: [FormsModule, ReactiveFormsModule, ConfirmModal, LoadingModal, Alert],
@@ -21,11 +23,16 @@ export class FormComponent implements OnInit {
   participantForm: FormGroup
   isLoading = false;
 
+  
+  selectedLogo: File | null = null;
+  logoPreview: string | null = null;
+
   constructor(
     private router: Router,
     public participantService: ParticipantService,
     private activatedRoute: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private changeDetection: ChangeDetectorRef
   ) {
     this.participantForm = fb.group({
       name: ['', Validators.required],
@@ -65,52 +72,83 @@ export class FormComponent implements OnInit {
   }
 
   newSave(): void {
-    const participants = this.participantForm.getRawValue()
+    const participants = this.participantForm.getRawValue();
+    this.isLoading = true;
 
-    this.isLoading = true
+    this.participantService.createParticipant(participants).pipe(
+      switchMap(createdParticipants => {
+        if (!this.selectedLogo) {
+          return of(null);
+        }
 
-    this.participantService.createParticipant(participants).subscribe({
+        const createdParticipant = createdParticipants[0];
+        if (!createdParticipant?.id) {
+          return throwError(
+            () => new Error('The created participant ID was not returned.')
+          );
+        }
+
+        return this.participantService.addLogo(
+          createdParticipant.id,
+          this.selectedLogo
+        );
+      }),
+      finalize(() => {
+        this.isLoading = false;
+      })
+    ).subscribe({
       next: () => {
-        this.participantService.showSuccess('Participant added successfully.')
-        this.isLoading = false
-        this.router.navigate(['/participant'])
+        this.participantService.showSuccess('Participant added successfully.');
+        this.router.navigate(['/participant']);
       },
       error: (error) => {
-        this.isLoading = false
-        console.error('Failed to add participant', error)
-        this.participantService.showError(error.name === 'TimeoutError'
-          ? 'Create request timed out after 10 seconds. Please try again.'
-          : 'Failed to create participant. Please try again.')
+        console.error('Create or logo upload failed:', error);
+        if (error.name === 'TimeoutError') {
+          this.participantService.showError(
+            'Create request timed out after 10 seconds. Please try again.'
+          );
+        }
       }
-    })
-  }
-
-  editSave(): void {
-    const id = this.activatedRoute.snapshot.paramMap.get('id');
-    if (id === null) {
-      return;
+    });
     }
 
-    const participant = this.participantForm.getRawValue()
-    this.isLoading = true
-    this.participantService.updateParticipant(id, participant).subscribe({
-      next: () => {
-        this.participantService.showSuccess('Participant edited successfully')
-        this.isLoading = false
-        this.router.navigate(['/participant'])
-      },
-      error: (error) => {
-        this.isLoading = false
-        console.error('Failed to Update Participant', error)
-        this.participantService.showError( error.name === 'TimeoutError'
-          ? 'Update timed out after 10 seconds. Please try again.'
-          : 'Failed to update participant. Please try again.')
+    editSave(): void {
+      const id = this.activatedRoute.snapshot.paramMap.get('id');
+      if (id === null) {
+        return;
       }
-    })
-    
-  }
 
-  cancel(): void {
+      const participant = this.participantForm.getRawValue()
+      this.isLoading = true
+      this.participantService.updateParticipant(id, participant).pipe(
+        switchMap(() => {
+          if (!this.selectedLogo) {
+            return of(null);
+          }
+
+          return this.participantService.addLogo(id, this.selectedLogo);
+        }),
+        finalize(() => {
+          this.isLoading = false;
+        })
+      ).subscribe({
+        next: () => {
+          this.participantService.showSuccess('Participant edited successfully');
+          this.router.navigate(['/participant'])
+        },
+        error: (error) => {
+          console.error('Update or logo upload failed:', error)
+          if (error.name === 'TimeoutError') {
+            this.participantService.showError(
+              'Update timed out after 10 seconds. Please try again.'
+            );
+          }
+        }
+      })
+      
+    }
+
+    cancel(): void {
     this.showCancelConfirmation = true;
   }
 
@@ -146,4 +184,34 @@ export class FormComponent implements OnInit {
   get f() {
     return this.participantForm.controls
   }
+
+
+  onLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    if (!['image/png', 'image/jpeg'].includes(file.type)) {
+      this.participantService.showError('Please select a PNG or JPG image.');
+      input.value = '';
+      return;
+    }
+
+    this.selectedLogo = file;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.logoPreview = reader.result as string;
+      this.changeDetection.markForCheck()
+    };
+    reader.onerror = () => {
+    this.participantService.showError(
+      'Unable to preview the selected logo.'
+    );
+
+    
+  };
+    reader.readAsDataURL(file);
+}
 }
