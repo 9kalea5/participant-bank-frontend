@@ -6,6 +6,7 @@ import { ConfirmModal } from '../shared/confirm-modal/confirm-modal';
 import { LoadingModal } from '../shared/loading-modal/loading-modal';
 import { Alert } from '../shared/alert/alert';
 import { finalize } from 'rxjs';
+import { AuthService } from '../auth/auth-service';
 
 @Component({
   imports: [FormsModule, ConfirmModal, LoadingModal, Alert],
@@ -23,6 +24,7 @@ export class ParticipantComponent {
   constructor(
     private router: Router,
     public participantService: ParticipantService,
+    private authService: AuthService,
     private changeDetectorRef: ChangeDetectorRef){}
 
 
@@ -47,6 +49,7 @@ export class ParticipantComponent {
   }
   
   logout() {
+    this.authService.logout()
     this.router.navigate(['/login'])
   }
   

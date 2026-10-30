@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { AuthService } from '../auth/auth-service';
 
 @Component({
   imports: [FormsModule, CommonModule],
@@ -12,7 +13,10 @@ import { Router } from '@angular/router';
 export class LoginComponent {
   errorMessage: string = ''
   successMessage: string = ''
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   login(username: string, password: string): void {
     this.errorMessage = ''
@@ -26,8 +30,9 @@ export class LoginComponent {
 
 
     if(username === 'admin' && password === 'Admin123') {
-     this.successMessage = 'Login succesful'
-     this.router.navigate(['/participant'])
+    this.authService.login()
+    this.successMessage = 'Login succesful'
+    this.router.navigate(['/participant'])
     } else {
       this.errorMessage = 'Incorrect username or password'
     }
