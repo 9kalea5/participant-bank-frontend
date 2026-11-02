@@ -5,17 +5,35 @@ import {
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { ParticipantService } from '../services/participant-service';
+import { AuthService } from '../auth/auth-service';
 
 export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
   const participantService = inject(ParticipantService);
+  const authService = inject(AuthService);
+
+  const token = authService.getToken();
+  const isLoginRequest = request.url.includes('/api/v1/auth/login');
+  const isBackendRequest = request.url.startsWith('http://localhost:9081/');
+
+  if (token && isBackendRequest && !isLoginRequest) {
+    request = request.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
-      participantService.showError(
-        error instanceof HttpErrorResponse
-          ? getFriendlyErrorMessage(error)
-          : 'Something went wrong while communicating with the server. Please try again.'
-      );
+      if (isLoginRequest) {
+        return throwError(() => error);
+      }
+
+      if (error.status === 401 && isBackendRequest) {
+        authService.logout();
+      }
+
+      participantService.showError(getFriendlyErrorMessage(error));
       return throwError(() => error);
     })
   );

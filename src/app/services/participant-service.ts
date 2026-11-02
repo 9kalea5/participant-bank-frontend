@@ -12,7 +12,6 @@ export class ParticipantService {
   errorMessage = signal('');
   successMessage = signal('');
   private readonly requestTimeout = 10_000
-  private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
   participantList: Participant[] = []
   
@@ -100,37 +99,18 @@ loadParticipants(): Observable<Participant[]> {
 
   }
   showSuccess(message: string): void {
-    this.scheduleMessageClear();
     this.successMessage.set(message);
     this.errorMessage.set('');
   }
 
   showError(message: string): void {
-    this.scheduleMessageClear();
     this.errorMessage.set(message);
     this.successMessage.set('');
   }
 
   clearMessages(): void {
-    if (this.messageTimeout !== null) {
-      clearTimeout(this.messageTimeout);
-      this.messageTimeout = null;
-    }
-
     this.successMessage.set('');
     this.errorMessage.set('');
-  }
-
-  private scheduleMessageClear(): void {
-    if (this.messageTimeout !== null) {
-      clearTimeout(this.messageTimeout);
-    }
-
-    this.messageTimeout = setTimeout(() => {
-      this.successMessage.set('');
-      this.errorMessage.set('');
-      this.messageTimeout = null;
-    }, 1000);
   }
 
   addLogo(id: number | string, file: File): Observable<unknown> {
