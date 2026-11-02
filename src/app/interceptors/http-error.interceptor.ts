@@ -6,6 +6,7 @@ import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { ParticipantService } from '../services/participant-service';
 import { AuthService } from '../auth/auth-service';
+import { environment } from '../environments/environment';
 
 export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
   const participantService = inject(ParticipantService);
@@ -13,7 +14,7 @@ export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
 
   const token = authService.getToken();
   const isLoginRequest = request.url.includes('/api/v1/auth/login');
-  const isBackendRequest = request.url.startsWith('http://localhost:9081/');
+  const isBackendRequest = request.url.startsWith(environment.apiUrl);
 
   if (token && isBackendRequest && !isLoginRequest) {
     request = request.clone({

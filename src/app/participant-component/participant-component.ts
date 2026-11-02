@@ -7,6 +7,7 @@ import { LoadingModal } from '../shared/loading-modal/loading-modal';
 import { Alert } from '../shared/alert/alert';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth/auth-service';
+import { environment } from '../environments/environment';
 
 @Component({
   imports: [FormsModule, ConfirmModal, LoadingModal, Alert],
@@ -72,7 +73,7 @@ export class ParticipantComponent {
 
     const filename = logoPath.split('/').pop();
     return filename
-      ? `http://localhost:9081/uploads/logos/${filename}`
+      ? `${environment.apiUrl}/uploads/logos/${filename}`
       : null;
   }
 

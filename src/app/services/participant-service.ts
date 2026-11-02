@@ -2,10 +2,11 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Participant } from '../models/participant.interface';
 import { HttpClient } from '@angular/common/http';
 import { catchError, finalize, map, Observable, tap, throwError, timeout } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Injectable({providedIn: 'root'})
 export class ParticipantService {
-  private readonly url = 'http://localhost:9081/api/v1/participants';
+  private readonly url = `${environment.apiUrl}/participants`;
   private http = inject(HttpClient);
   searchTerm: string = '';
   loading = false;
