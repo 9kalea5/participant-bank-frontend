@@ -7,6 +7,7 @@ import { ConfirmModal } from '../shared/confirm-modal/confirm-modal';
 import { LoadingModal } from '../shared/loading-modal/loading-modal';
 import { Alert } from '../shared/alert/alert';
 import { finalize, Observable, of, switchMap, throwError, map } from 'rxjs';
+import { ParticipantInfo, ParticipantResponse } from '../models/participant.interface';
 
 
 @Component({
@@ -22,8 +23,9 @@ export class FormComponent implements OnInit {
   showCancelConfirmation = false;
   participantForm: FormGroup
   isLoading = false;
+  createdParticipantId: number = 0;
+  createdParticipantInfo: ParticipantInfo | null = null;
 
-  
   selectedLogo: File | null = null;
   logoPreview: string | null = null;
 
@@ -74,17 +76,19 @@ export class FormComponent implements OnInit {
 
 
   newSave(): void {
+    console.log('Attempting to save new participant...');
   const participants = this.participantForm.getRawValue();
   this.isLoading = true;
 
   this.participantService.createParticipant(participants).subscribe({
 
-    next: (createdParticipant) => {
-
+    next: (createdParticipant: any) => {
+      console.log('Participant created:', createdParticipant);
       // Get the ID directly from the response
-      const createdParticipantId = createdParticipant?.id;
-
-      if (!createdParticipantId) {
+      this.createdParticipantId = createdParticipant.id;
+      console.log('Created participant ID:', this.createdParticipantId);
+      
+      if (!this.createdParticipantId) {
         this.isLoading = false;
 
         this.participantService.showError(
@@ -95,6 +99,7 @@ export class FormComponent implements OnInit {
 
       // No logo selected
       if (!this.selectedLogo) {
+        console.log('No logo selected. Skipping logo upload.');
         this.isLoading = false;
 
         this.participantService.showSuccess(
@@ -105,13 +110,15 @@ export class FormComponent implements OnInit {
         return;
       }
 
+      console.log('Uploading logo for participant ID:', this.createdParticipantId);
       // Upload logo using the returned participant ID
       this.participantService.addLogo(
-        createdParticipantId,
+        this.createdParticipantId,
         this.selectedLogo
       ).subscribe({
 
         next: () => {
+          console.log('Logo uploaded successfully for participant ID:', this.createdParticipantId);
           this.isLoading = false;
 
           this.participantService.showSuccess(
@@ -122,9 +129,8 @@ export class FormComponent implements OnInit {
         },
 
         error: (error) => {
-          this.isLoading = false;
-
           console.error('Logo upload failed:', error);
+          this.isLoading = false;
 
           this.participantService.showError(
             error.name === 'TimeoutError'

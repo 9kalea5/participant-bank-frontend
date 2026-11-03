@@ -6,7 +6,7 @@ import { environment } from '../environments/environment';
 
 @Injectable({providedIn: 'root'})
 export class ParticipantService {
-  private readonly url = `${environment.apiUrl}/participants`;
+  private readonly url = `${environment.apiUrl}/api/v1/participants`;
   private http = inject(HttpClient);
   searchTerm: string = '';
   loading = false;
@@ -89,6 +89,7 @@ loadParticipants(): Observable<Participant[]> {
   }
 
   createParticipant(participant: Participant): Observable<any> {
+    console.log('SERVICES - Creating participant:', participant);
     return this.http.post<{
       status: string;
       message: string;
@@ -127,10 +128,19 @@ loadParticipants(): Observable<Participant[]> {
   }
 
   addLogo(id: number | string, file: File | null): Observable<unknown> {
+    console.log('SERVICES - Adding logo for participant ID:', id, 'File:', file);
     const formData = new FormData();
     formData.append('logo', file || '')
 
     return this.http.post(`${this.url}/${id}/logo`, formData)
           .pipe(timeout(this.requestTimeout))
+  }
+
+  returnFullLogoUrl(logoPath: string | null): string {
+    console.log('SERVICES - Returning full logo URL for logoPath:', `${environment.apiUrl}${logoPath}`);
+    if (!logoPath) {
+      return '';
+    }
+    return `${environment.apiUrl}${logoPath}`;
   }
 }

@@ -115,4 +115,10 @@ export class ParticipantComponent {
     this.showDeleteConfirmation = false
     this.selectedParticipantId = null
   }
+
+  returnFullLogoUrl(logoPath: string | null): string {
+    console.log('PARTICIPANT COMPONENT - Returning full logo URL for logoPath:', logoPath);
+    return this.participantService.returnFullLogoUrl(logoPath);
+  }
 }
+ 

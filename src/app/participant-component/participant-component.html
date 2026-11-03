@@ -56,18 +56,15 @@
               >
                 <th scope="row">{{ participant.id }}</th>
                 <td>
-                  @if (getLogoUrl(participant.logoPath); as logoUrl) {
                     <img
-                      [src]="logoUrl"
-                      [alt]="participant.name + ' logo'"
+                      [src]="returnFullLogoUrl(participant.logoPath)"
+                      [alt]="participant.name"
                       class="img-thumbnail rounded-circle"
                       width="50"
                       height="50"
                       style="object-fit: contain;"
                     />
-                  } @else {
-                    <span class="text-secondary">No logo</span>
-                  }
+                  
                 </td>
                 <td>{{ participant.name }}</td>
                 <td>{{ participant.bic }}</td>
