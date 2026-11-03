@@ -6,7 +6,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ConfirmModal } from '../shared/confirm-modal/confirm-modal';
 import { LoadingModal } from '../shared/loading-modal/loading-modal';
 import { Alert } from '../shared/alert/alert';
-import { finalize, of, switchMap, throwError } from 'rxjs';
+import { finalize, Observable, of, switchMap, throwError, map } from 'rxjs';
 
 
 @Component({
@@ -71,46 +71,86 @@ export class FormComponent implements OnInit {
     }
   }
 
+
+
   newSave(): void {
-    const participants = this.participantForm.getRawValue();
-    this.isLoading = true;
+  const participants = this.participantForm.getRawValue();
+  this.isLoading = true;
 
-    this.participantService.createParticipant(participants).pipe(
-      switchMap(createdParticipants => {
-        if (!this.selectedLogo) {
-          return of(null);
-        }
+  this.participantService.createParticipant(participants).subscribe({
 
-        const createdParticipant = createdParticipants[0];
-        if (!createdParticipant?.id) {
-          return throwError(
-            () => new Error('The created participant ID was not returned.')
-          );
-        }
+    next: (createdParticipant) => {
 
-        return this.participantService.addLogo(
-          createdParticipant.id,
-          this.selectedLogo
-        );
-      }),
-      finalize(() => {
+      // Get the ID directly from the response
+      const createdParticipantId = createdParticipant?.id;
+
+      if (!createdParticipantId) {
         this.isLoading = false;
-      })
-    ).subscribe({
-      next: () => {
-        this.participantService.showSuccess('Participant added successfully.');
+
+        this.participantService.showError(
+          'Participant created, but the ID was not returned.'
+        );
+        return;
+      }
+
+      // No logo selected
+      if (!this.selectedLogo) {
+        this.isLoading = false;
+
+        this.participantService.showSuccess(
+          'Participant added successfully.'
+        );
+
         this.router.navigate(['/participant']);
-      },
-      error: (error) => {
-        console.error('Create or logo upload failed:', error);
-        if (error.name === 'TimeoutError') {
+        return;
+      }
+
+      // Upload logo using the returned participant ID
+      this.participantService.addLogo(
+        createdParticipantId,
+        this.selectedLogo
+      ).subscribe({
+
+        next: () => {
+          this.isLoading = false;
+
+          this.participantService.showSuccess(
+            'Participant added successfully.'
+          );
+
+          this.router.navigate(['/participant']);
+        },
+
+        error: (error) => {
+          this.isLoading = false;
+
+          console.error('Logo upload failed:', error);
+
           this.participantService.showError(
-            'Create request timed out after 10 seconds. Please try again.'
+            error.name === 'TimeoutError'
+              ? 'Logo upload timed out. Please try again.'
+              : error.error?.message ||
+                'Participant created, but logo upload failed.'
           );
         }
-      }
-    });
+      });
+    },
+
+    error: (error) => {
+      this.isLoading = false;
+
+      console.error('Participant creation failed:', error);
+
+      this.participantService.showError(
+        error.name === 'TimeoutError'
+          ? 'Participant creation timed out. Please try again.'
+          : error.error?.message || error.message ||
+            'Failed to create participant.'
+      );
     }
+  });
+}
+
 
     editSave(): void {
       const id = this.activatedRoute.snapshot.paramMap.get('id');

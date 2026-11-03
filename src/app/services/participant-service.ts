@@ -88,10 +88,22 @@ loadParticipants(): Observable<Participant[]> {
                     .pipe(timeout(this.requestTimeout))
   }
 
-  createParticipant(participant: Participant): Observable<Participant[]>{
-    return this.http.post<Participant[]>(this.url, participant)
-                    .pipe(timeout(this.requestTimeout))
+  createParticipant(participant: Participant): Observable<any> {
+    return this.http.post<{
+      status: string;
+      message: string;
+      success: string;
+      institution: Participant;
+    }>(this.url, participant).pipe(
+      timeout(this.requestTimeout),
+      map(response => {
+        if (response.status !== 'SUCCESS') {
+          throw new Error(response.message || 'Failed to create participant');
+        }
 
+        return response.institution;
+      })
+    );
   }
 
   deleteParticipant(id: number | string): Observable<Participant[]> {
@@ -114,9 +126,9 @@ loadParticipants(): Observable<Participant[]> {
     this.errorMessage.set('');
   }
 
-  addLogo(id: number | string, file: File): Observable<unknown> {
+  addLogo(id: number | string, file: File | null): Observable<unknown> {
     const formData = new FormData();
-    formData.append('logo', file)
+    formData.append('logo', file || '')
 
     return this.http.post(`${this.url}/${id}/logo`, formData)
           .pipe(timeout(this.requestTimeout))
